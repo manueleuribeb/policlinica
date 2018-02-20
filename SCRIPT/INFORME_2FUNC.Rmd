@@ -1,0 +1,481 @@
+---
+title: "Precios Actualizados Servicio Terapéutico y Farmacológico y Presupuestos"
+author: "Unidad de Análisis de Costos Policlínica Táchira"
+date: "`r format(Sys.time(), '%d %B %Y, %X')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#Carga de las librerías necesarias
+
+
+library(readr)
+library(tidyverse)
+library(knitr)
+library(readxl)
+library(kableExtra)
+options(warn = -1)
+```
+
+## Monto del Servicio Terapéutico y Farmacológico (AASC) y de los Presupuestos
+
+
+```{r eval=TRUE, echo=FALSE}
+
+#Se definen las variables del script:
+
+#Variables que contienen las ubicaciones de las plantillas de KITS, PRESUPUESTOS y PRECIOS 
+data_path_kit <- "Z:/COSTOS/MONTOS PRESUPUESTO/KITS/CSV/" #Ubicación de las plantillas de los KITS
+data_path_ppto <- "Z:/COSTOS/MONTOS PRESUPUESTO/PRESUPUESTOS/CSV/" #Ubicaciónb de las plantillas de Presupuesto
+data_path_precio <- "Z:/COSTOS/MONTOS PRESUPUESTO/PRECIOS/" #Ubicación de las tablas con los precios según Ultimo Costo y de los Baremos
+data_path_report <- "Z:/COSTOS/MONTOS PRESUPUESTO/REPORTES/"
+
+
+#Variables que se cambian manualmente:
+
+colchon <- 100000
+PRECIO_PTO <- 10864
+PRECIO_PERFIL <- 222575 #Este precio se debe ubicar en SANOS
+
+#******************************************************
+#********CÁLCULO DE LOS PRECIOS DE LOS KITS************
+#******************************************************
+
+#Función para cargar los datos de los kits en las respectivas variables
+
+cargar_datos <- function(kit) {
+  kits_csv <- kit
+  read_csv(paste0(data_path_kit, kits_csv, ".csv"),
+           locale = locale(decimal_mark = ",", 
+                           grouping_mark = "."),
+           skip = 2,
+           col_types = cols())
+}
+
+#Función para cargar las plantillas de presupuesto
+
+cargar_ppto <- function(ppto) {
+  ppto_csv <- ppto
+  read_csv(paste0(data_path_ppto, ppto_csv, ".csv"),
+           locale = locale(decimal_mark = ",", 
+                           grouping_mark = "."),
+           col_types = cols('PRECIO UNIT' = col_skip(),
+                            TOTAL = col_skip(),
+                            PRECIO2 = col_skip(),
+                            Cantidad2 = col_skip(),
+                            Total2 = col_skip()))
+}
+
+
+#Función para preparar las tablas que contienen los artículos adicionales dependiendo si la intervención tiene hospitalización o es ambulatoria
+
+comp_hosp <- read_csv(paste0(data_path_kit,"COMP_HOSP.csv"),
+                      locale = locale(decimal_mark = ",", 
+                      grouping_mark = "."),
+                      col_types = cols())
+
+comp_ambu <- read_csv(paste0(data_path_kit,"COMP_AMB.csv"),
+                      locale = locale(decimal_mark = ",", 
+                      grouping_mark = "."),
+                      col_types = cols())
+
+
+#Cargar las plantillas de los KITS
+
+BLEFAROPLASTIA_PVPKitsAQ <- cargar_datos("BLEFAROPLASTIA - PVP_KitsAQ")
+CESAREA_I_PVPKitsAQ <- cargar_datos("CESAREA_I - PVP_KitsAQ")
+CESAREA_II_PVPKitsAQ <- cargar_datos("CESAREA_II - PVP_KitsAQ")
+CESAREA_MULT_PVPKitsAQ <- cargar_datos("CESAREA_MULT - PVP_KitsAQ")
+COLECISTECT_PVPKitsAQ <- cargar_datos("COLECISTECTOMIA - PVP_KitsAQ")
+DERMOLIPECTOMIA_PVPKitsAQ <- cargar_datos("DERMOLIPECTOMIA - PVP_KitsAQ")
+ESTERIL_LAPARAT_PVPKitsAQ <- cargar_datos("ESTER_LAPARAT - PVP_KitsAQ")
+ESTERIL_LAPARCP_PVPKitsAQ <- cargar_datos("ESTER_LAPARCP - PVP_KitsAQ")
+FIMOSECTOMIA_ADU_PVPKitsAQ <- cargar_datos("FIMOSECTOMIA_ADUL - PVP_KitsAQ")
+FIMOSECTOMIA_PED_PVPKitsAQ <- cargar_datos("FIMOSECTOMIA_PED - PVP_KitsAQ")
+HERNIA_EVENT_PVPKitsAQ <- cargar_datos("HERNIA_EVENT - PVP_KitsAQ")
+HERNIA_INGUI_PVPKitsAQ <- cargar_datos("HERNIA_INGUI - PVP_KitsAQ")
+HERNIA_UMBIL_PVPKitsAQ <- cargar_datos("HERNIA_UMBIL - PVP_KitsAQ")
+HISTERECT_ABD_PVPKitsAQ <- cargar_datos("HISTEREC_ABD - PVP_KitsAQ")
+HISTERECT_VAG_PVPKitsAQ <- cargar_datos("HISTEREC_VAG - PVP_KitsAQ")
+LARINGOSCOPIA_PVPKitsAQ <- cargar_datos("LARINGOSCOPIA - PVP_KitsAQ")
+LIPOSUCCION_PVPKitsAQ <- cargar_datos("LIPOSUCCION - PVP_KitsAQ")
+MAMOPLASTIA_AUM_PVPKitsAQ <- cargar_datos("MAMOPLASTIA_AUM - PVP_KitsAQ")
+MAMOPLASTIA_RED_PVPKitsAQ <- cargar_datos("MAMOPLASTIA_RED - PVP_KitsAQ")
+MASTECTOMIA_PVPKitsAQ <- cargar_datos("MASTECTOMIA - PVP_KitsAQ")
+OTOPLASTIA_PVPKitsAQ <- cargar_datos("OTOPLASTIA - PVP_KitsAQ")
+PROSTATECTOMIA_PVPKitsAQ <- cargar_datos("PROSTATECTOMIA - PVP_KitsAQ")
+RECSUBMSEPTUM_PVPKitsAQ <- cargar_datos("RECONST_SUBM - PVP_KitsAQ")
+RINOPLASTIA_PVPKitsAQ <- cargar_datos("RINOPLASTIA - PVP_KitsAQ")
+RITIDECTOMIA_PVPKitsAQ <- cargar_datos("RITIDECTOMIA - PVP_KitsAQ")
+VARICOCELE_BIL_PVPKitsAQ <- cargar_datos("VARICOCELE_BIL - PVP_KitsAQ")
+VARICOCELE_UNI_PVPKitsAQ <- cargar_datos("VARICOCELE_UNI - PVP_KitsAQ")
+
+#CARGA LOS KITS DE HOSPITALIZACIÓN
+
+CESAREA_HOSP <- cargar_datos("CESAREA_HOSP")
+CESAREAMULT_HOSP <- cargar_datos("CESAREAMULT_HOSP")
+COLECISTECT_HOSP <- cargar_datos("COLECISTECTOMIA_HOSP")
+DERMOLIP_HOSP <- cargar_datos("DERMOLIP_HOSP")
+ESTERLAPARAT_HOSP <- cargar_datos("ESTERLAPARAT_HOSP")
+HERNIAEVENT_HOSP <- cargar_datos("HERNIAEVENT_HOSP")
+HERNIAINGUI_HOSP <- cargar_datos("HERNIAINGUI_HOSP")
+HISTERECTOM_HOSP <- cargar_datos("HISTERECTOM_HOSP")
+MASTECTOMIA_HOSP <- cargar_datos("MASTECTOMIA_HOSP")
+PROSTATECTOMIA_HOSP <- cargar_datos("PROSTATECTOMIA_HOSP")
+
+#Cambia el nombre de la variable `DESCRIPCIÓN DEL ARTÍCULO` por ARTICULO de cada data frame
+
+cambio_variable <- function(var) {
+  variable <- var
+  variable <- variable %>% 
+              select(CODIGO, `DESCRIPCIÓN DEL ARTÍCULO`, MEDIDA, CANTIDAD) %>% 
+                rename(ARTICULO = `DESCRIPCIÓN DEL ARTÍCULO`)
+}
+
+BLEFAROPLASTIA_PVPKitsAQ <- cambio_variable(BLEFAROPLASTIA_PVPKitsAQ)
+CESAREA_I_PVPKitsAQ <- cambio_variable(CESAREA_I_PVPKitsAQ)
+CESAREA_II_PVPKitsAQ <- cambio_variable(CESAREA_II_PVPKitsAQ)
+CESAREA_MULT_PVPKitsAQ <- cambio_variable(CESAREA_MULT_PVPKitsAQ)
+COLECISTECT_PVPKitsAQ <- cambio_variable(COLECISTECT_PVPKitsAQ)
+DERMOLIPECTOMIA_PVPKitsAQ <- cambio_variable(DERMOLIPECTOMIA_PVPKitsAQ)
+ESTERIL_LAPARAT_PVPKitsAQ <- cambio_variable(ESTERIL_LAPARAT_PVPKitsAQ)
+ESTERIL_LAPARCP_PVPKitsAQ <- cambio_variable(ESTERIL_LAPARCP_PVPKitsAQ)
+FIMOSECTOMIA_ADU_PVPKitsAQ <- cambio_variable(FIMOSECTOMIA_ADU_PVPKitsAQ)
+FIMOSECTOMIA_PED_PVPKitsAQ <- cambio_variable(FIMOSECTOMIA_PED_PVPKitsAQ)
+HERNIA_EVENT_PVPKitsAQ <- cambio_variable(HERNIA_EVENT_PVPKitsAQ)
+HERNIA_INGUI_PVPKitsAQ <- cambio_variable(HERNIA_INGUI_PVPKitsAQ)
+HERNIA_UMBIL_PVPKitsAQ <- cambio_variable(HERNIA_UMBIL_PVPKitsAQ)
+HISTERECT_ABD_PVPKitsAQ <- cambio_variable(HISTERECT_ABD_PVPKitsAQ)
+HISTERECT_VAG_PVPKitsAQ <- cambio_variable(HISTERECT_VAG_PVPKitsAQ)
+LARINGOSCOPIA_PVPKitsAQ <- cambio_variable(LARINGOSCOPIA_PVPKitsAQ)
+LIPOSUCCION_PVPKitsAQ <- cambio_variable(LIPOSUCCION_PVPKitsAQ)
+MAMOPLASTIA_AUM_PVPKitsAQ <- cambio_variable(MAMOPLASTIA_AUM_PVPKitsAQ)
+MAMOPLASTIA_RED_PVPKitsAQ <- cambio_variable(MAMOPLASTIA_RED_PVPKitsAQ)
+MASTECTOMIA_PVPKitsAQ <- cambio_variable(MASTECTOMIA_PVPKitsAQ)
+OTOPLASTIA_PVPKitsAQ <- cambio_variable(OTOPLASTIA_PVPKitsAQ)
+PROSTATECTOMIA_PVPKitsAQ <- cambio_variable(PROSTATECTOMIA_PVPKitsAQ)
+RECSUBMSEPTUM_PVPKitsAQ <- cambio_variable(RECSUBMSEPTUM_PVPKitsAQ)
+RINOPLASTIA_PVPKitsAQ <- cambio_variable(RINOPLASTIA_PVPKitsAQ)
+RITIDECTOMIA_PVPKitsAQ <- cambio_variable(RITIDECTOMIA_PVPKitsAQ)
+VARICOCELE_BIL_PVPKitsAQ <- cambio_variable(VARICOCELE_BIL_PVPKitsAQ)
+VARICOCELE_UNI_PVPKitsAQ <- cambio_variable(VARICOCELE_UNI_PVPKitsAQ)
+CESAREA_HOSP <- cambio_variable(CESAREA_HOSP)
+CESAREAMULT_HOSP <- cambio_variable(CESAREAMULT_HOSP)
+COLECISTECT_HOSP <- cambio_variable(COLECISTECT_HOSP)
+DERMOLIP_HOSP <- cambio_variable(DERMOLIP_HOSP)
+ESTERLAPARAT_HOSP <- cambio_variable(ESTERLAPARAT_HOSP)
+HERNIAEVENT_HOSP <- cambio_variable(HERNIAEVENT_HOSP)
+HERNIAINGUI_HOSP <- cambio_variable(HERNIAINGUI_HOSP)
+HISTERECTOM_HOSP <- cambio_variable(HISTERECTOM_HOSP)
+MASTECTOMIA_HOSP <- cambio_variable(MASTECTOMIA_HOSP)
+PROSTATECTOMIA_HOSP <- cambio_variable(PROSTATECTOMIA_HOSP)
+
+#Cargar la tabla de precios y 
+
+#Combinar los datos de las listas de precio
+PRECIOS_ACT <- read_csv(paste0(data_path_precio,"PRECIOS.csv"),
+                        locale = locale(decimal_mark = ",", grouping_mark = "."),
+                        col_types = cols())
+
+PRECIOS_ACT <- PRECIOS_ACT %>% 
+  select(ITEMBMBR, PVP) %>%
+  rename(CODIGO = 'ITEMBMBR', PRECIO = 'PVP')
+
+#Preparar la información de los kits: Añade el precio unitario y calcula 
+kits_Hosp_definitivo <- function(x, y) {
+  kit <- x
+  kit2 <- y
+  kit <- kit %>% 
+    select(CODIGO, ARTICULO, MEDIDA, CANTIDAD) %>%
+              rbind(comp_hosp) %>% 
+              rbind(kit2) %>% 
+              left_join(PRECIOS_ACT, by = 'CODIGO') %>% 
+              mutate(PRECIO_TOTAL = CANTIDAD * PRECIO)
+}
+
+kits_Amb_definitivo <- function(x) {
+  kit <- x
+  kit <- kit %>% 
+    select(CODIGO, ARTICULO, MEDIDA, CANTIDAD) %>%
+              rbind(comp_ambu) %>% 
+              left_join(PRECIOS_ACT, by = 'CODIGO') %>% 
+              mutate(PRECIO_TOTAL = CANTIDAD * PRECIO)
+}
+
+BLEFAROPLASTIA <- kits_Amb_definitivo(BLEFAROPLASTIA_PVPKitsAQ)
+CESAREA_I <- kits_Hosp_definitivo(CESAREA_I_PVPKitsAQ, CESAREA_HOSP)
+CESAREA_II <- kits_Hosp_definitivo(CESAREA_II_PVPKitsAQ, CESAREA_HOSP)
+CESAREA_MULT <- kits_Hosp_definitivo(CESAREA_MULT_PVPKitsAQ, CESAREAMULT_HOSP)
+COLECISTECTO <- kits_Hosp_definitivo(COLECISTECT_PVPKitsAQ,COLECISTECT_HOSP)
+DERMOLIPECTOMIA <- kits_Hosp_definitivo(DERMOLIPECTOMIA_PVPKitsAQ, DERMOLIP_HOSP)
+ESTERIL_LAPARAT <- kits_Hosp_definitivo(ESTERIL_LAPARAT_PVPKitsAQ, ESTERLAPARAT_HOSP)
+ESTERIL_LAPARCP <- kits_Amb_definitivo(ESTERIL_LAPARCP_PVPKitsAQ)
+FIMOSECTOMIA_ADU <- kits_Amb_definitivo(FIMOSECTOMIA_ADU_PVPKitsAQ)
+FIMOSECTOMIA_PED <- kits_Amb_definitivo(FIMOSECTOMIA_PED_PVPKitsAQ)
+HERNIA_EVENT <- kits_Hosp_definitivo(HERNIA_EVENT_PVPKitsAQ, HERNIAEVENT_HOSP)
+HERNIAINGUI_HOSP <- kits_Hosp_definitivo(HERNIA_INGUI_PVPKitsAQ, HERNIAINGUI_HOSP)
+HERNIAINGUI_AMB <- kits_Amb_definitivo(HERNIA_INGUI_PVPKitsAQ)
+HERNIA_UMBIL <- kits_Amb_definitivo(HERNIA_UMBIL_PVPKitsAQ)
+HISTERECT_ABD <- kits_Hosp_definitivo(HISTERECT_ABD_PVPKitsAQ, HISTERECTOM_HOSP)
+HISTERECT_VAG <- kits_Hosp_definitivo(HISTERECT_VAG_PVPKitsAQ, HISTERECTOM_HOSP)
+LARINGOSCOPIA <- kits_Amb_definitivo(LARINGOSCOPIA_PVPKitsAQ)
+LIPOSUCCION <- kits_Amb_definitivo(LIPOSUCCION_PVPKitsAQ)
+MAMOPLASTIA_AUM <- kits_Amb_definitivo(MAMOPLASTIA_AUM_PVPKitsAQ)
+MAMOPLASTIA_RED <- kits_Amb_definitivo(MAMOPLASTIA_RED_PVPKitsAQ)
+MASTECTOMIA_AMB <- kits_Amb_definitivo(MASTECTOMIA_PVPKitsAQ)
+MASTECTOMIA_HOSP <- kits_Hosp_definitivo(MASTECTOMIA_PVPKitsAQ, MASTECTOMIA_HOSP)
+OTOPLASTIA <- kits_Amb_definitivo(OTOPLASTIA_PVPKitsAQ)
+PROSTATECTOMIA <- kits_Hosp_definitivo(PROSTATECTOMIA_PVPKitsAQ, PROSTATECTOMIA_HOSP)
+RECONST_SUBM <- kits_Amb_definitivo(RECSUBMSEPTUM_PVPKitsAQ)
+RINOPLASTIA <- kits_Amb_definitivo(RINOPLASTIA_PVPKitsAQ)
+RITIDECTOMIA <- kits_Amb_definitivo(RITIDECTOMIA_PVPKitsAQ)
+VARICOCELE_BIL <- kits_Amb_definitivo(VARICOCELE_BIL_PVPKitsAQ)
+VARICOCELE_UNI <- kits_Amb_definitivo(VARICOCELE_UNI_PVPKitsAQ)
+
+#Calcula el total sin ajustar el formato
+monto_1 <- function(x) {
+  kit <- x
+  total <- round(sum(kit$PRECIO_TOTAL)/1000, 0) * 1000 + colchon
+}
+
+BLEFAROPLASTIA_TOTAL <- monto_1(BLEFAROPLASTIA)
+CESAREAI_TOTAL <-monto_1(CESAREA_I)
+CESAREAII_TOTAL <- monto_1(CESAREA_II)
+CESAREAMULT_TOTAL <- monto_1(CESAREA_MULT)
+COLECISTECT_TOTAL <- monto_1(COLECISTECTO)
+DERMOLIPECTOMIA_TOTAL <- monto_1(DERMOLIPECTOMIA)
+ESTERILLAPARAT_TOTAL <- monto_1(ESTERIL_LAPARAT)
+ESTERILLAPARCP_TOTAL <- monto_1(ESTERIL_LAPARCP)
+FIMOSECTOMIAADU_TOTAL <- monto_1(FIMOSECTOMIA_ADU)
+FIMOSECTOMIAPED_TOTAL <- monto_1(FIMOSECTOMIA_PED)
+HERNIAEVEN_TOTAL <- monto_1(HERNIA_EVENT)
+HERNIAINGUIHOSP_TOTAL <- monto_1(HERNIAINGUI_HOSP)
+HERNIAINGUIAMB_TOTAL <- monto_1(HERNIAINGUI_AMB)
+HERNIAUMBIL_TOTAL <- monto_1(HERNIA_UMBIL)
+HISTERECTABD_TOTAL <- monto_1(HISTERECT_ABD)
+HISTERECTVAG_TOTAL <- monto_1(HISTERECT_VAG)
+LARINGOSCOPIA_TOTAL <- monto_1(LARINGOSCOPIA)
+LIPOSUCCION_TOTAL <- monto_1(LIPOSUCCION)
+MAMOPLASTIAAUM_TOTAL <- monto_1(MAMOPLASTIA_AUM)
+MAMOPLASTIARED_TOTAL <- monto_1(MAMOPLASTIA_RED)
+MASTECTOMIAAMB_TOTAL <- monto_1(MASTECTOMIA_AMB)
+MASTECTOMIAHOSP_TOTAL <- monto_1(MASTECTOMIA_HOSP)
+OTOPLASTIA_TOTAL <- monto_1(OTOPLASTIA)
+PROSTATECTOMIA_TOTAL <- monto_1(PROSTATECTOMIA)
+RECONSTSUBM_TOTAL <- monto_1(RECONST_SUBM)
+RINOPLASTIA_TOTAL <- monto_1(RINOPLASTIA)
+RITIDECTOMIA_TOTAL <- monto_1(RITIDECTOMIA)
+VARICOCELEBIL_TOTAL <- monto_1(VARICOCELE_BIL)
+VARICOCELEUNI_TOTAL <- monto_1(VARICOCELE_UNI)
+
+nombre_KIT <- read_csv(paste0(data_path_kit,"nombre3.csv"), col_types = cols())
+
+monto_KIT <- c(BLEFAROPLASTIA_TOTAL, CESAREAI_TOTAL, CESAREAII_TOTAL, CESAREAMULT_TOTAL, COLECISTECT_TOTAL, DERMOLIPECTOMIA_TOTAL,
+               ESTERILLAPARAT_TOTAL, ESTERILLAPARCP_TOTAL, FIMOSECTOMIAADU_TOTAL, FIMOSECTOMIAPED_TOTAL, HERNIAEVEN_TOTAL,
+               HERNIAINGUIAMB_TOTAL, HERNIAINGUIHOSP_TOTAL, HERNIAINGUIAMB_TOTAL, HERNIAINGUIHOSP_TOTAL, HERNIAUMBIL_TOTAL,
+               HISTERECTABD_TOTAL, HISTERECTVAG_TOTAL, LARINGOSCOPIA_TOTAL, LIPOSUCCION_TOTAL, MAMOPLASTIAAUM_TOTAL, MAMOPLASTIARED_TOTAL,
+               MASTECTOMIAAMB_TOTAL, MASTECTOMIAHOSP_TOTAL, OTOPLASTIA_TOTAL, PROSTATECTOMIA_TOTAL, RECONSTSUBM_TOTAL, RINOPLASTIA_TOTAL,
+               RITIDECTOMIA_TOTAL, VARICOCELEBIL_TOTAL, VARICOCELEUNI_TOTAL)
+
+RESUMEN <- data.frame(nombre_KIT, monto_KIT)
+write.csv(RESUMEN, file = paste0(data_path_report, "ServTerFarm.csv"))
+
+
+#Calcula los montos totales de los kits y ajusta el formato de presentación
+
+monto <- function(x) {
+  kit <- x
+  total <- round(sum(kit$PRECIO_TOTAL)/1000, 0) * 1000 + colchon
+  total <- prettyNum(total,
+                     big.mark = ".",
+                     decimal.mark = ",")
+}
+
+BLEFAROPLASTIA_TOTAL <- monto(BLEFAROPLASTIA)
+CESAREAI_TOTAL <-monto(CESAREA_I)
+CESAREAII_TOTAL <- monto(CESAREA_II)
+CESAREAMULT_TOTAL <- monto(CESAREA_MULT)
+COLECISTECT_TOTAL <- monto(COLECISTECTO)
+DERMOLIPECTOMIA_TOTAL <- monto(DERMOLIPECTOMIA)
+ESTERILLAPARAT_TOTAL <- monto(ESTERIL_LAPARAT)
+ESTERILLAPARCP_TOTAL <- monto(ESTERIL_LAPARCP)
+FIMOSECTOMIAADU_TOTAL <- monto(FIMOSECTOMIA_ADU)
+FIMOSECTOMIAPED_TOTAL <- monto(FIMOSECTOMIA_PED)
+HERNIAEVEN_TOTAL <- monto(HERNIA_EVENT)
+HERNIAINGUIHOSP_TOTAL <- monto(HERNIAINGUI_HOSP)
+HERNIAINGUIAMB_TOTAL <- monto(HERNIAINGUI_AMB)
+HERNIAUMBIL_TOTAL <- monto(HERNIA_UMBIL)
+HISTERECTABD_TOTAL <- monto(HISTERECT_ABD)
+HISTERECTVAG_TOTAL <- monto(HISTERECT_VAG)
+LARINGOSCOPIA_TOTAL <- monto(LARINGOSCOPIA)
+LIPOSUCCION_TOTAL <- monto(LIPOSUCCION)
+MAMOPLASTIAAUM_TOTAL <- monto(MAMOPLASTIA_AUM)
+MAMOPLASTIARED_TOTAL <- monto(MAMOPLASTIA_RED)
+MASTECTOMIAAMB_TOTAL <- monto(MASTECTOMIA_AMB)
+MASTECTOMIAHOSP_TOTAL <- monto(MASTECTOMIA_HOSP)
+OTOPLASTIA_TOTAL <- monto(OTOPLASTIA)
+PROSTATECTOMIA_TOTAL <- monto(PROSTATECTOMIA)
+RECONSTSUBM_TOTAL <- monto(RECONST_SUBM)
+RINOPLASTIA_TOTAL <- monto(RINOPLASTIA)
+RITIDECTOMIA_TOTAL <- monto(RITIDECTOMIA)
+VARICOCELEBIL_TOTAL <- monto(VARICOCELE_BIL)
+VARICOCELEUNI_TOTAL <- monto(VARICOCELE_UNI)
+
+monto_KIT <- c(BLEFAROPLASTIA_TOTAL, CESAREAI_TOTAL, CESAREAII_TOTAL, CESAREAMULT_TOTAL, COLECISTECT_TOTAL, DERMOLIPECTOMIA_TOTAL,
+               ESTERILLAPARAT_TOTAL, ESTERILLAPARCP_TOTAL, FIMOSECTOMIAADU_TOTAL, FIMOSECTOMIAPED_TOTAL, HERNIAEVEN_TOTAL,
+               HERNIAINGUIAMB_TOTAL, HERNIAINGUIHOSP_TOTAL, HERNIAINGUIAMB_TOTAL, HERNIAINGUIHOSP_TOTAL, HERNIAUMBIL_TOTAL,
+               HISTERECTABD_TOTAL, HISTERECTVAG_TOTAL, LARINGOSCOPIA_TOTAL, LIPOSUCCION_TOTAL, MAMOPLASTIAAUM_TOTAL, MAMOPLASTIARED_TOTAL,
+               MASTECTOMIAAMB_TOTAL, MASTECTOMIAHOSP_TOTAL, OTOPLASTIA_TOTAL, PROSTATECTOMIA_TOTAL, RECONSTSUBM_TOTAL, RINOPLASTIA_TOTAL,
+               RITIDECTOMIA_TOTAL, VARICOCELEBIL_TOTAL, VARICOCELEUNI_TOTAL)
+
+
+#**************************************************************
+#********CÁLCULO DE LOS PRECIOS DE LOS PRESUPUESTOS************
+#**************************************************************
+
+BAREMOS <- read_delim(paste0(data_path_precio, "BAREMOS_EXCEL.csv"),
+                      ";", 
+                      escape_double = FALSE, 
+                      locale = locale(decimal_mark = ",",
+                                      grouping_mark = "."), 
+                      trim_ws = TRUE,
+                      col_types = cols())
+
+BAREMOS_1 <- BAREMOS %>% select(CODIGO, PRECIO)
+
+#Carga de los datos en las tablas
+
+BLEFAROPLASTIA <- cargar_ppto("BLEFAROPLASTIA")
+CESAREAI <- cargar_ppto("CESAREAI")
+CESAREAII <- cargar_ppto("CESAREAII")
+CESAREAMULTIPLE <- cargar_ppto("CESAREAMULTIPLE")
+COLECISTECTOMIA <- cargar_ppto("COLECISTECTOMIA")
+DERMOLIPECTOMIA <- cargar_ppto("DERMOLIPECTOMIA")
+ESTER_LAPARATOMIA <- cargar_ppto("ESTER_LAPARATOMIA")
+ESTER_LAPAROSCOPIA <- cargar_ppto("ESTER_LAPAROSCOPIA")
+FIMOSECTOMIA_ADU <- cargar_ppto("FIMOSECTOMIA_ADU")
+FIMOSECTOMIA_PED <- cargar_ppto("FIMOSECTOMIA_PED")
+HERNIA_CURAEVENT <- cargar_ppto("HERNIA_CURAEVENT")
+HERNIA_INGUIBILAMB <- cargar_ppto("HERNIA_INGUIBILAMB")
+HERNIA_INGUIBILHOSP <- cargar_ppto("HERNIA_INGUIBILHOSP")
+HERNIA_INGUIUNIAMB <- cargar_ppto("HERNIA_INGUIUNIAMB")
+HERNIA_INGUIUNIHOSP <- cargar_ppto("HERNIA_INGUIUNIHOSP")
+HERNIA_UMBILICAL <- cargar_ppto("HERNIA_UMBILICAL")
+HISTERECTOMIA_ABD <- cargar_ppto("HISTERECTOMIA_ABD")
+HISTERECTOMIA_VAG <- cargar_ppto("HISTERECTOMIA_VAG")
+LARINGOSCOPIA <- cargar_ppto("LARINGOSCOPIA")
+LIPOSUCCION <- cargar_ppto("LIPOSUCCION")
+MAMOPLASTIA_AUM <- cargar_ppto("MAMOPLASTIA_AUM")
+MAMOPLASTIA_RED <- cargar_ppto("MAMOPLASTIA_RED")
+MASTECTOMIA_AMB <- cargar_ppto("MASTECTOMIA_AMB")
+MASTECTOMIA_HOSP <- cargar_ppto("MASTECTOMIA_HOSP")
+OTOPLASTIA <- cargar_ppto("OTOPLASTIA")
+PROSTATECTOMIA <- cargar_ppto("PROSTATECTOMIA")
+RECONST_SUBM <- cargar_ppto("RECONST_SUBM")
+RINOPLASTIA <- cargar_ppto("RINOPLASTIA")
+RITIDECTOMIA <- cargar_ppto("RITIDECTOMIA")
+VARICOCELE_BILAT <- cargar_ppto("VARICOCELE_BILAT")
+VARICOCELE_UNIL <- cargar_ppto("VARICOCELE_UNIL")
+
+
+#Unir las tablas en una gran tabla macro PPTO_MACRO
+
+PPTO_MACRO <- rbind(BLEFAROPLASTIA, CESAREAI, CESAREAII, CESAREAMULTIPLE, COLECISTECTOMIA, 
+                    DERMOLIPECTOMIA, ESTER_LAPARATOMIA, ESTER_LAPAROSCOPIA, FIMOSECTOMIA_ADU, FIMOSECTOMIA_PED, 
+                    HERNIA_CURAEVENT, HERNIA_INGUIBILAMB, HERNIA_INGUIBILHOSP, HERNIA_INGUIUNIAMB, HERNIA_INGUIUNIHOSP, 
+                    HERNIA_UMBILICAL, HISTERECTOMIA_ABD, HISTERECTOMIA_VAG, LARINGOSCOPIA, LIPOSUCCION, 
+                    MAMOPLASTIA_AUM, MAMOPLASTIA_RED, MASTECTOMIA_AMB, MASTECTOMIA_HOSP, OTOPLASTIA, 
+                    PROSTATECTOMIA, RECONST_SUBM, RINOPLASTIA, RITIDECTOMIA, VARICOCELE_BILAT, VARICOCELE_UNIL)
+
+# Separa en varias tablas los artículos cuyos montos se obtienen por diferentes vías
+
+PLANTILLA_LAB <- PPTO_MACRO %>% filter(SUBCATEGORIA == "COSTO ESTIMADO", CODIGO == "LAB9999")
+PLANTILLA_SERVTF <- PPTO_MACRO %>% filter(SUBCATEGORIA == "COSTO ESTIMADO", CODIGO == "MEDI9998")
+PLANTILLA_MEDICOS <- PPTO_MACRO %>% filter(SUBCATEGORIA == "SERVICIOS MEDICOS EN PUNTOS")
+PLANTILLA_PERFIL <- PPTO_MACRO %>% filter(CODIGO == "LAB0467")
+PLANTILLA_ARTIC <- PPTO_MACRO %>% filter(SUBCATEGORIA != "COSTO ESTIMADO", SUBCATEGORIA != "SERVICIOS MEDICOS EN PUNTOS", CODIGO != "LAB0467")
+
+#Carga la tabla con los datos de Laboratorio
+
+LABORATORIO <- read_csv(paste0(data_path_ppto,"LABORATORIO.csv"), 
+                        locale = locale(grouping_mark = ".", 
+                                        decimal_mark = ","),
+                        col_types = cols(`PRECIO UNITARIO` = col_skip(),
+                                         TOTAL = col_skip()))
+LABORATORIO <- LABORATORIO %>% 
+              left_join(BAREMOS_1, by = 'CODIGO') %>%
+              mutate(PRECIO_TOTAL = CANTIDAD * PRECIO) %>%
+              arrange(ARTICULO)
+
+TOTAL_LABORATORIO <- round(sum(LABORATORIO$PRECIO_TOTAL)/1000, 0)*1000 + 50000
+
+PLANTILLA_LAB <- PLANTILLA_LAB %>% mutate(PRECIO = TOTAL_LABORATORIO, PRECIO_TOTAL = CANTIDAD * PRECIO)
+
+write.csv(TOTAL_LABORATORIO, file = paste0(data_path_report, "TOTAL_LABORATORIO.csv"))
+
+#Carga la tabla SERVTERFARM y la adjunta a la plantilla PLANTILLA_SERVTF
+
+SERVTERFARM <- read_csv(paste0(data_path_report, "ServTerFarm.csv"), 
+                        col_types = cols())
+
+SERVTERFARM <- SERVTERFARM %>% 
+               rename("NOMBRE PLANTILLA" = "NOMBRES", PRECIO = "monto_KIT") %>%
+               select('NOMBRE PLANTILLA', PRECIO)
+
+PLANTILLA_SERVTF <- PLANTILLA_SERVTF %>% 
+                    left_join(SERVTERFARM, by = "NOMBRE PLANTILLA") %>% 
+                    mutate(PRECIO_TOTAL = PRECIO * CANTIDAD)
+
+#Colocar los precios en la plantilla Médicos
+
+PLANTILLA_MEDICOS <- PLANTILLA_MEDICOS %>% 
+                     mutate(PRECIO = PRECIO_PTO, PRECIO_TOTAL = PRECIO * CANTIDAD)
+
+#Colocar los precios en la plantilla Perfil Preoperatorio PLANTILLA_PERFIL
+PLANTILLA_PERFIL <- PLANTILLA_PERFIL %>% 
+                    mutate(PRECIO = PRECIO_PERFIL, PRECIO_TOTAL = PRECIO * CANTIDAD)
+
+#Colocar los precios del resto de artículos en la Plantilla PLANTILLA_ARTIC
+PLANTILLA_ARTIC <- PLANTILLA_ARTIC %>% 
+                   left_join(BAREMOS_1, by = "CODIGO") %>% 
+                   mutate(PRECIO_TOTAL = CANTIDAD * PRECIO)
+
+#Volvemos a juntar las plantillas para formar nuevamente la tabla completa con los valores
+PLANTILLA_MACRO <- rbind(PLANTILLA_ARTIC, PLANTILLA_LAB, PLANTILLA_MEDICOS, PLANTILLA_PERFIL, PLANTILLA_SERVTF)
+PLANTILLA_MACRO <- PLANTILLA_MACRO %>%
+                   arrange(`NOMBRE PLANTILLA`, `LISTA DE PRECIOS`, SUBCATEGORIA, CODIGO)
+                   
+PRESUPUESTO_TOTALES <- PLANTILLA_MACRO %>% 
+                        group_by(`NOMBRE PLANTILLA`) %>%
+                        summarise(TOTAL = sum(PRECIO_TOTAL))
+
+MONTOS_TOTALES <- cbind(SERVTERFARM, select(PRESUPUESTO_TOTALES, TOTAL))
+
+write.csv(MONTOS_TOTALES, file = paste0(data_path_report, "MONTOS_TOTALES_", Sys.Date(),".csv"))
+write.csv(PRESUPUESTO_TOTALES, file = paste0(data_path_report, "PRESUPUESTO_TOTALES.csv"))
+
+PRESUPUESTO_TOTALES <- prettyNum(PRESUPUESTO_TOTALES$TOTAL,
+                                 big.mark = ".",
+                                 decimal.mark = ",")
+
+RESUMEN <- data.frame(nombre_KIT, monto_KIT, PRESUPUESTO_TOTALES)
+
+encabezado <- c("Nombre de la Plantilla", "Monto del Kit.", "Monto Presup.")
+
+names(RESUMEN) <- encabezado
+
+write.csv(RESUMEN, file = paste0("RESUMEN_MONTOS_", Sys.Date(), ".csv"))
+
+RESUMEN %>% 
+  kable(format = "html", 
+        caption = "Montos Actualizados KITS/PRESUP") %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), 
+                full_width = F,
+                position = "center",
+                font_size = 18) %>% 
+  row_spec(0, bold = T, color = "white", background = "#D7261E")
+
+```
+
